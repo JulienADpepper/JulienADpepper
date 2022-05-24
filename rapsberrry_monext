@@ -11,26 +11,30 @@ print(config.sections()) #pour verifier que le fichier de conf est bien ouvert
 
 
 GPIO.setmode(GPIO.BOARD) #Définit le mode de numérotation (Board)
-#GPIO.setwarnings(False) #On désactive les messages d'alerte
+GPIO.setwarnings(False) #On désactive les messages d'alerte
 
-LED = config['port_de_sortie'].getint('Led') #Définit le numéro du port GPIO qui alimente la led
+LED = int(config['Port_de_sortie']['led']) #Définit le numéro du port GPIO qui alimente la led
 
 GPIO.setup(LED, GPIO.OUT) #Active le contrôle du GPIO
 
 state = GPIO.input(LED) #Lit l'état actuel du GPIO, vrai si allumé, faux si éteint
 
-url = config['Curl'].getstring('url') #définition de l'url de l'api pour extraire les informations 
-headers = {config['Curl'].getstring('type_header'): config['Curl'].getstring('token')} # definition des headers 
+url = config['Curl']['url'] #définition de l'url de l'api pour extraire les informations 
+
+type_header = config['Curl']['type_header'] #définition des variables du headers
+token = config['Curl']['token']
+headers = {type_header : token} # definition des headers 
+
 r = requests.get(url, headers=headers)#requette curl dans python #la requette curl est stoqué dans une variable r
 
 l=r.json() #le fichier json extrait de l'api est stoqué dans la liste de dictionnaires l
 
 def affiche_critical(l) : #permet de ne récupérer que les cas qui nous interresse 
     result=[] #après la requette cURL
-    type_erreur = config['Filtre'].getstring('type_erreur') #recupere du fichier de conf les bonnes valeurs
-    severity = config['Filtre'].getint('niveau_de_severite') #récupere le niveau de severite du fichier de conf 
+    type_erreur = config['Filtre']['type_erreur'] #recupere du fichier de conf les bonnes valeurs
+    severite = config['Filtre']['niveau_de_severite] #récupere le niveau de severite du fichier de conf 
     for i in l :
-        if (i['type']==type_erreur) and (i['severity']==severity) :
+        if (i['type']==type_erreur) and (i['severity']==severite) :
             result.append(i) #result récupere les elements de l ayant le bon type d'erreur et la bonne severite
     return result
 
