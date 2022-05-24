@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO #Importe la bibliothèque pour contrôler les GPIOs
-import requests
-import logging
-import confiparser
+import requests #Importe le module pour faire les requettes curl
+import logging # Importe le module pour faire les logging
+import confiparser #Importe le module pour lire le fichier de configuration
 
 config = configparser.ConfigParser() #initialisation du configparser pour lire le fichier de conf
 
@@ -19,31 +19,31 @@ GPIO.setup(LED, GPIO.OUT) #Active le contrôle du GPIO
 
 state = GPIO.input(LED) #Lit l'état actuel du GPIO, vrai si allumé, faux si éteint
 
-url = config['Curl'].getstring('url')
-headers = {config['Curl'].getstring('type_header'): config['Curl'].getstring('token')}
-r = requests.get(url, headers=headers)#requette curl dans python
+url = config['Curl'].getstring('url') #définition de l'url de l'api pour extraire les informations 
+headers = {config['Curl'].getstring('type_header'): config['Curl'].getstring('token')} # definition des headers 
+r = requests.get(url, headers=headers)#requette curl dans python #la requette curl est stoqué dans une variable r
 
-l=r.json()
+l=r.json() #le fichier json extrait de l'api est stoqué dans la liste de dictionnaires l
 
 def affiche_critical(l) : #permet de ne récupérer que les cas qui nous interresse 
     result=[] #après la requette cURL
     type_erreur = config['Filtre'].getstring('type_erreur') #recupere du fichier de conf les bonnes valeurs
-    severity = config['Filtre'].getint('niveau_de_severite')
+    severity = config['Filtre'].getint('niveau_de_severite') #récupere le niveau de severite du fichier de conf 
     for i in l :
         if (i['type']==type_erreur) and (i['severity']==severity) :
-            result.append(i)
+            result.append(i) #result récupere les elements de l ayant le bon type d'erreur et la bonne severite
     return result
 
-def allumage(l):
+def allumage(l): #programme chargé de l'allumage de la led sur le raspberry
     logging.info('entré dans l allumage')
     if (len(l) != 0) not(state) : #si la liste n'est pas vide et la LED est éteinte alors il y a des alertes critical donc on allume
         logging.info('led allumé')
         GPIO.output(LED, GPIO.HIGH) #allumage de la LED
-        return True
+        return True #utile pour verifier le bon fonctionnement du programme
     if (len(l) == 0) and state :#si la liste est vide et la LED est allumé alors il n'y a plus d'alertes critical et donc on allume
         logging.info('led éteinte')
         GPIO.output(LED, GPIO.LOW)#extinction de la LED
-        return False
+        return False #utile pour verifier le bon fonctionnement du programme
 
 
-allumage(affiche_critical(l))
+allumage(affiche_critical(l)) #lancement du code, mettre print devant pour verifier les sortie true et false
